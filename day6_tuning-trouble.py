@@ -1,4 +1,4 @@
-with open("day6.txt", "r") as file:
+with open("data/day6.txt", "r") as file:
     puzzle_input = file.readline()
 
 
