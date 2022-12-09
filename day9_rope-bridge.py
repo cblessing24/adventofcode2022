@@ -65,20 +65,37 @@ def get_head_positions(directions):
         yield position
 
 
-def get_tail_positions(head_positions):
-    tail_position = Vector(0, 0)
-    for head_position in head_positions:
-        difference = head_position - tail_position
+def get_knot_positions(earlier_knot_positions):
+    current_knot_position = Vector(0, 0)
+    for earlier_knot_position in earlier_knot_positions:
+        difference = earlier_knot_position - current_knot_position
         if difference.length < 2.0:
-            yield tail_position
+            yield current_knot_position
             continue
-        tail_position = tail_position + difference - difference.unit
-        yield tail_position
+        current_knot_position = current_knot_position + difference - difference.unit
+        yield current_knot_position
+
+
+def get_tail_positions(head_positions, n_knots):
+    knot_positions = head_positions
+    for _ in range(n_knots - 1):
+        knot_positions = get_knot_positions(knot_positions)
+    for knot_position in knot_positions:
+        yield knot_position
+
+
+def compute_tail_positions(filename, n_knots):
+    lines = read_lines(filename)
+    directions = parse_directions(lines)
+    head_positions = get_head_positions(directions)
+    tail_positions = get_tail_positions(head_positions, n_knots=n_knots)
+    return len(set(tail_positions))
 
 
 if __name__ == "__main__":
-    lines = read_lines("data/day9.txt")
-    directions = parse_directions(lines)
-    head_positions = get_head_positions(directions)
-    tail_positions = get_tail_positions(head_positions)
-    print(f"The tail visited {len(set(tail_positions))} positions at least once")
+    print(
+        f"The tail of a rope with 2 knots visited {compute_tail_positions('data/day9.txt', n_knots=2)} positions at least once"
+    )
+    print(
+        f"The tail of a rope with 10 knots visited {compute_tail_positions('data/day9.txt', n_knots=10)} positions at least once"
+    )
