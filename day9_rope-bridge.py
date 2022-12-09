@@ -51,8 +51,8 @@ class Vector:
         return Vector(round(self.x / self.length), round(self.y / self.length))
 
 
-def get_head_positions(directions):
-    position = Vector(0, 0)
+def get_head_positions(directions, initial):
+    position = initial
     movements = {
         Direction.UP: (operator.add, Vector(0, 1)),
         Direction.RIGHT: (operator.add, Vector(1, 0)),
@@ -65,8 +65,8 @@ def get_head_positions(directions):
         yield position
 
 
-def get_knot_positions(earlier_knot_positions):
-    current_knot_position = Vector(0, 0)
+def get_knot_positions(earlier_knot_positions, initial):
+    current_knot_position = initial
     for earlier_knot_position in earlier_knot_positions:
         difference = earlier_knot_position - current_knot_position
         if difference.length < 2.0:
@@ -76,26 +76,23 @@ def get_knot_positions(earlier_knot_positions):
         yield current_knot_position
 
 
-def get_tail_positions(head_positions, n_knots):
+def get_tail_positions(head_positions, n_knots, initial):
     knot_positions = head_positions
     for _ in range(n_knots - 1):
-        knot_positions = get_knot_positions(knot_positions)
+        knot_positions = get_knot_positions(knot_positions, initial=initial)
     for knot_position in knot_positions:
         yield knot_position
 
 
-def compute_tail_positions(filename, n_knots):
+def get_tail_positions_count(filename, n_knots, initial):
     lines = read_lines(filename)
     directions = parse_directions(lines)
-    head_positions = get_head_positions(directions)
-    tail_positions = get_tail_positions(head_positions, n_knots=n_knots)
+    head_positions = get_head_positions(directions, initial=initial)
+    tail_positions = get_tail_positions(head_positions, n_knots=n_knots, initial=initial)
     return len(set(tail_positions))
 
 
 if __name__ == "__main__":
-    print(
-        f"The tail of a rope with 2 knots visited {compute_tail_positions('data/day9.txt', n_knots=2)} positions at least once"
-    )
-    print(
-        f"The tail of a rope with 10 knots visited {compute_tail_positions('data/day9.txt', n_knots=10)} positions at least once"
-    )
+    for n_knots in [2, 10]:
+        n_tail_positions = get_tail_positions_count("data/day9.txt", n_knots=n_knots, initial=Vector(0, 0))
+        print(f"The tail of a rope with {n_knots} knots visited {n_tail_positions} positions at least once")
