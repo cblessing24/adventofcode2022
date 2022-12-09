@@ -62,7 +62,7 @@ with open("data/day7.txt", "r") as file:
             if destination == "..":
                 current_directory = current_directory.parent
                 continue
-            destination_directory = Directory(destination, parent=current_directory) 
+            destination_directory = Directory(destination, parent=current_directory)
             current_directory.add(destination_directory)
             current_directory = destination_directory
 

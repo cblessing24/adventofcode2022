@@ -24,5 +24,3 @@ if __name__ == "__main__":
         if len(set(buffer)) == length:
             print(f"Start-of-packet marker '{''.join(buffer)}' received after {i + 1} characters")
             break
-
-
