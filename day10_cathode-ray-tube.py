@@ -106,7 +106,3 @@ if __name__ == "__main__":
     rows = get_rows(pixels, width=width)
     for row in stringify_rows(rows, {Pixel.DARK: ".", Pixel.LIT: "#"}):
         print(row)
-    # signal_strengths = compute_signal_strength(register_values)
-    # filtered_signal_strengths = filter_signal_strengths(signal_strengths, cycles=cycles)
-    # sum_signal_strengts = sum(s[1] for s in filtered_signal_strengths)
-    # print(f"The sum of the signal strengths is {sum_signal_strengts}")
