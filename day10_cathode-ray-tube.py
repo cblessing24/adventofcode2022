@@ -67,12 +67,46 @@ def filter_signal_strengths(signal_strengths, cycles):
             yield i_cycle, signal_strength
 
 
+class Pixel(Enum):
+    DARK = 1
+    LIT = 2
+
+
+def get_pixels(sprite_positions, height, width):
+    for _ in range(height):
+        for i_pixel in range(width):
+            _, sprite_position = next(sprite_positions)
+            if abs(sprite_position - i_pixel) < 2:
+                yield Pixel.LIT
+            else:
+                yield Pixel.DARK
+
+
+def get_rows(pixels, width):
+    row = []
+    for i_pixel, pixel in enumerate(pixels, start=1):
+        row.append(pixel)
+        if i_pixel % width == 0:
+            yield row
+            row = []
+
+
+def stringify_rows(rows, chars):
+    for row in rows:
+        yield "".join(chars[p] for p in row)
+
+
 if __name__ == "__main__":
-    cycles = [20, 60, 100, 140, 180, 220]
+    height = 6
+    width = 40
     lines = read_lines("data/day10.txt")
     instructions = parse_lines(lines)
-    register_values = compute_register_values(instructions, n_cycles=max(cycles), initial=1)
-    signal_strengths = compute_signal_strength(register_values)
-    filtered_signal_strengths = filter_signal_strengths(signal_strengths, cycles=cycles)
-    sum_signal_strengts = sum(s[1] for s in filtered_signal_strengths)
-    print(f"The sum of the signal strengths is {sum_signal_strengts}")
+    register_values = compute_register_values(instructions, n_cycles=height * width, initial=1)
+    pixels = get_pixels(register_values, height=height, width=width)
+    rows = get_rows(pixels, width=width)
+    for row in stringify_rows(rows, {Pixel.DARK: ".", Pixel.LIT: "#"}):
+        print(row)
+    # signal_strengths = compute_signal_strength(register_values)
+    # filtered_signal_strengths = filter_signal_strengths(signal_strengths, cycles=cycles)
+    # sum_signal_strengts = sum(s[1] for s in filtered_signal_strengths)
+    # print(f"The sum of the signal strengths is {sum_signal_strengts}")
