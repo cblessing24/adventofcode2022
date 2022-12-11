@@ -1,11 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
-
-def read_lines(filename):
-    with open(filename, "r") as file:
-        for line in file.readlines():
-            yield line.strip()
+from file import read_lines
 
 
 class State(Enum):

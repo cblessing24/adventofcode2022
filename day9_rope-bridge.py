@@ -3,11 +3,7 @@ import operator
 from dataclasses import dataclass
 from enum import Enum
 
-
-def read_lines(filename):
-    with open(filename) as file:
-        for line in file.readlines():
-            yield line.strip()
+from file import read_lines
 
 
 class Direction(Enum):
