@@ -1,6 +1,6 @@
 import operator
 from abc import ABC, abstractmethod
-from collections import Counter, deque
+from collections import deque
 from dataclasses import dataclass
 from math import prod
 from typing import Callable
@@ -126,12 +126,13 @@ def parse_observations(raw_observations):
 
 
 def play_rounds(troop, n_rounds):
+    prime = prod(m.test for m in troop.values())
     for _ in range(n_rounds):
         for monkey in troop.values():
             while len(monkey.items):
                 item = monkey.items.popleft()
                 item = monkey.inspect(item)
-                item = item // 3
+                item = item % prime
                 troop[monkey.decide(item)].catch(item)
         yield troop
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     raw_observations = parse_lines(lines)
     monkeys = parse_observations(raw_observations)
     troop = {m.number: m for m in monkeys}
-    troop = play_rounds(troop, 20)
+    troop = play_rounds(troop, 10_000)
     for troop in troop:
         pass
     print(prod(sorted([m.n_inspections for m in troop.values()])[-2:]))
