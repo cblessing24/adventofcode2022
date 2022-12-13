@@ -50,10 +50,26 @@ def check_orders(pairs):
         yield check_order(left, right)
 
 
+def order_packets(packets):
+    ordered = [next(packets)]
+    for packet in packets:
+        if packet is None:
+            continue
+        i = 0
+        for ordered_packet in ordered:
+            if not check_order(packet, ordered_packet):
+                break
+            i += 1
+        ordered.insert(i, packet)
+    return ordered
+
+
 if __name__ == "__main__":
     lines = read_lines("data/day13.txt")
     packets = parse_packets(lines)
-    pairs = create_pairs(packets)
-    in_orders = check_orders(pairs)
-    sum_in_order = sum(i + 1 for i, b in enumerate(in_orders) if b)
-    print(sum_in_order)
+    divider = [[[2]], [[6]]]
+    key = 1
+    for i, packet in enumerate(reversed(order_packets(chain(packets, divider))), start=1):
+        if packet in divider:
+            key *= i
+    print(key)
