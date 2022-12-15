@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from itertools import tee
+from itertools import pairwise, tee
 
 from file import read_lines
 
@@ -46,28 +46,68 @@ def compute_covered_distances(sensors, beacons):
         yield manhattan_distance(sensor, beacon)
 
 
-def compute_covered_coordinates(sensors, distances):
-    for sensor, distance in zip(sensors, distances):
-        for difference in range(1, distance + 1):
-            yield sensor + Coordinate(difference, 0)
-            yield sensor - Coordinate(difference, 0)
-            yield sensor + Coordinate(0, difference)
-            yield sensor - Coordinate(0, difference)
-        for x_difference in range(1, distance):
-            y_difference = distance - x_difference
-            yield sensor + Coordinate(x_difference, y_difference)
-            yield sensor - Coordinate(x_difference, y_difference)
-            yield sensor + Coordinate(-x_difference, y_difference)
-            yield sensor - Coordinate(-x_difference, y_difference)
+@dataclass(frozen=True)
+class Range:
+    start: int
+    end: int
+
+    @property
+    def length(self):
+        return self.end - self.start
 
 
-def is_covered(coordinate, sensors, distances):
-    is_covered = False
+def compute_covered_ranges(sensors, distances, y):
     for sensor, distance in zip(sensors, distances):
-        is_covered = manhattan_distance(coordinate, sensor) <= distance
-        if is_covered:
-            break
-    return is_covered
+        vertical_distance = manhattan_distance(sensor, Coordinate(sensor.x, y))
+        if vertical_distance > distance:
+            continue
+        horizontal_distance = distance - vertical_distance
+        left_border = Coordinate(sensor.x, y) - Coordinate(horizontal_distance, 0)
+        right_border = Coordinate(sensor.x, y) + Coordinate(horizontal_distance, 0)
+        assert manhattan_distance(left_border, sensor) == distance
+        assert manhattan_distance(right_border, sensor) == distance
+        yield Range(left_border.x, right_border.x)
+
+
+def merge_ranges(range1, range2):
+    merged = None
+    if range1.end + 1 >= range2.start and range1.start <= range2.start:
+        if range2.end <= range1.end:
+            merged = range1
+        else:
+            merged = Range(range1.start, range2.end)
+    if range2.end + 1 >= range1.start and range2.start <= range1.start:
+        if range1.end <= range2.end:
+            merged = range2
+        else:
+            merged = Range(range2.start, range1.end)
+    return merged
+
+
+def reduce_ranges(ranges):
+    ranges = iter(sorted(ranges, key=lambda r: (r.start, r.end)))
+    current = next(ranges)
+    merged_ranges = []
+    for range_ in ranges:
+        merged_range = merge_ranges(current, range_)
+        if not merged_range:
+            merged_ranges.append(current)
+            current = next(ranges)
+            continue
+        current = merged_range
+    merged_ranges.append(current)
+    return merged_ranges
+
+
+def find_beacon(sensors, distances, vertical_search_space, horizontal_search_space):
+    for y in range(vertical_search_space[0], vertical_search_space[1] + 1):
+        ranges = reduce_ranges(compute_covered_ranges(sensors, distances, y))
+        for range1, range2 in pairwise(ranges):
+            between_range = Range(range1.end + 1, range2.start - 1)
+            if between_range.start < horizontal_search_space[0] or between_range.end > horizontal_search_space[1]:
+                continue
+            assert between_range.length == 0
+            return Coordinate(between_range.start, y)
 
 
 def main():
@@ -75,17 +115,10 @@ def main():
     sensors = list(parse_sensors(lines1))
     beacons = list(parse_beacons(lines2))
     distances = list(compute_covered_distances(sensors, beacons))
-    left_edge = min(s.x - d for s, d in zip(sensors, distances))
-    right_edge = max(s.x + d for s, d in zip(sensors, distances))
-    covered = []
-    for i, x in enumerate(range(left_edge, right_edge + 1)):
-        if i % 100_000 == 0:
-            print(f"{i=:,}")
-        coordinate = Coordinate(x, 2_000_000)
-        if coordinate in beacons:
-            continue
-        covered.append(is_covered(coordinate, sensors, distances))
-    print(f"{sum(covered)=:,}")
+    beacon = find_beacon(sensors, distances, (0, 4_000_000), (0, 4_000_000))
+    assert beacon
+    frequency = beacon.x * 4_000_000 + beacon.y
+    print(f"The tuning frequency is {frequency:,}")
 
 
 if __name__ == "__main__":
